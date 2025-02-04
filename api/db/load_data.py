@@ -16,7 +16,7 @@ df["nutrition"] = df["nutrition"].apply(lambda x: ast.literal_eval(x) if isinsta
 conn = psycopg2.connect(
     dbname="recipe_db",
     user="postgres",
-    password="yourpassword",
+    password="admin",
     host="localhost",
     port="5432"
 )

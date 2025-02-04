@@ -4,6 +4,7 @@ import faiss
 import numpy as np
 import psycopg2
 import json
+import pickle
 from config import (
     POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_HOST, POSTGRES_PORT,
     FAISS_INDEX_PATH, EMBEDDING_MODEL
@@ -25,6 +26,10 @@ cur = conn.cursor()
 # Load FAISS index (from config path)
 index = faiss.read_index(FAISS_INDEX_PATH)
 
+# Load FAISS index-to-ID mapping
+with open("../retriever/faiss_to_id.pkl", "rb") as f:
+    faiss_to_id = pickle.load(f)
+
 # Load Sentence Transformer model (from config setting)
 model = SentenceTransformer(EMBEDDING_MODEL)
 
@@ -37,8 +42,11 @@ def search_recipes(query: str = Query(..., title="Search Query"), top_k: int = 5
     # Perform FAISS search
     distances, indices = index.search(query_vector, top_k)
 
-    # Get matching recipe IDs
-    recipe_ids = [int(i) for i in indices[0]]
+    # Convert FAISS indices to recipe IDs
+    recipe_ids = [faiss_to_id.get(int(i)) for i in indices[0] if int(i) in faiss_to_id]
+
+    if not recipe_ids:
+        return {"query": query, "results": []}
 
     # Query database
     cur.execute("SELECT * FROM recipes WHERE id IN %s;", (tuple(recipe_ids),))

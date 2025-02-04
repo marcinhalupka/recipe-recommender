@@ -1,4 +1,9 @@
 import streamlit as st
+import sys
+import os
+
+# Force Python to recognize the 'webapp/' directory
+sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 # Set Streamlit app config
 st.set_page_config(
